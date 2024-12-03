@@ -837,6 +837,7 @@ def collect_outputs_before_upgrade():
                     'show rsvp session | no-more',
                     'show rsvp session | match total',
                     'show interfaces | match "rate|ge-|xe-|ae-|et-" | no-more',
+                    'show interfaces diagnostics optics | no-more',
                     'show route summary | no-more',
                     'show vpls connections | match rmt | match up | no-more',
                     'show vpls connections | match rmt | match up | count',
