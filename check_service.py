@@ -37,7 +37,6 @@ def dict_route_table():
 def route_table():
     regex = ('(.*): \d+ destinations, (\d+) routes')
     route_table = os_path + '\\tables\\route summary.csv'
-    dict_route_table1 = {}
     with open(route_table, "w", newline='') as f:
         writer = csv.writer(f, delimiter=';', quoting=csv.QUOTE_MINIMAL)
         writer.writerow(["vpn_name", "routes_before", "routes_after", "diff", "summary"])
@@ -49,7 +48,6 @@ def route_table():
                         for m in match:
                             name = m.group(1)
                             routes = m.group(2)
-                            dict_route_table1[name] = routes
                             if (name == k for k in dict_route_table().keys()):
                                 diff = round((1-(int(routes)+1)/(int((dict_route_table()[name]))+1))*100)
                                 if int(str(diff).strip("%")) > 20:
@@ -735,6 +733,72 @@ def vrrp():
                     writer.writerow([interface] + [group] + [state] + [state_after] + [result_state] + [vr_state] + [vr_state_after] + [result_vr_state])
                 else:
                     writer.writerow([interface] + [group] + [state] + [""] + ["Not Ok"] + [vr_state] + [""] + ["Not Ok"])
+
+def dict_vpls_state():
+    regex = ('    (.*)\s+rmt\s+(\S+)\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\n')
+    dict = {}
+    with open(os_path + '\\outputs_after_upgrade\\show vpls connections.txt') as a:
+        match = re.finditer(regex, a.read())
+        if match:
+            for m in match:
+                id = m.group(1)
+                state = m.group(2)
+                dict[id] = {state}
+    return dict
+
+def vpls_connection():
+    regex = ('    (.*)\s+rmt\s+(\S+)\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\n')
+    vpls_state_table = os_path + '\\tables\\vpls state.csv'
+    with open(vpls_state_table, "w", newline='') as f:
+        writer = csv.writer(f, delimiter=';', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(["id", "state_before", "state_after", "state_summary"])
+        with open(os_path + '\\outputs_before_upgrade\\show vpls connections.txt') as a:
+            match = re.finditer(regex, a.read())
+            for m in match:
+                id = m.group(1)
+                state = m.group(2)
+                if id in dict_vpls_state().keys():
+                    state_after = str(dict_vpls_state()[id]).replace("{'", "").replace("'}", "")
+                    if state_after == state:
+                        result = "Ok"
+                    else:
+                        result = "Not Ok"
+                    writer.writerow([id] + [state] + [state_after] + [result])
+                else:
+                    writer.writerow([id] + [state] + [""] + ["Not Ok"])
+
+def dict_vpls_mac_table():
+    regex = ('(\d+) MAC address learned in routing instance (\S+) bridge domain .*\n')
+    dict = {}
+    with open(os_path + '\\outputs_after_upgrade\\show vpls mac-table.txt') as a:
+        match = re.finditer(regex, a.read())
+        if match:
+            for m in match:
+                count_mac = m.group(1)
+                name = m.group(2)
+                dict[name] = count_mac
+    return dict
+
+def vpls_mac_table():
+    regex = ('(\d+) MAC address learned in routing instance (\S+) bridge domain .*\n')
+    vpls_mac_table = os_path + '\\tables\\vpls mac table.csv'
+    with open(vpls_mac_table, "w", newline='') as f:
+        writer = csv.writer(f, delimiter=';', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(["vpls_instance", "mac_count_before", "mac_count_after", "diff", "summary"])
+        with open(os_path + '\\outputs_after_upgrade\\show vpls mac-table.txt') as a:
+            for line in a:
+                match = re.finditer(regex, line)
+                if match:
+                    for m in match:
+                        count_mac = m.group(1)
+                        name = m.group(2)
+                        if (name == k for k in dict_vpls_mac_table().keys()):
+                            diff = round((1-(int(count_mac)+1)/(int((dict_vpls_mac_table()[name]))+1))*100)
+                            if int(str(diff).strip("%")) > 30:
+                                result = ">30%"
+                            else:
+                                result = ""
+                            writer.writerow([name] + [dict_vpls_mac_table()[name]] + [count_mac] + [str(diff)+"%"] + [result])
 def ssh_to_router(command):
     with open(os_path + "\\ssh_connection.txt") as a:
         login = re.search('login: (.*)\n', a.readline()).group(1)
@@ -989,6 +1053,8 @@ def summary():
     mpls_lsp_table = os_path + '\\tables\\mpls lsp.csv'
     rsvp_table = os_path + '\\tables\\rsvp.csv'
     vrrp_table = os_path + '\\tables\\vrrp.csv'
+    vpls_state_table = os_path + '\\tables\\vpls state.csv'
+    vpls_mac_table = os_path + '\\tables\\vpls mac table.csv'
     with open(route_table, "r", newline='') as f:
         with open(os_path + '\\tables\\summary.txt', "w") as a:
             if ">20%" in f.read():
@@ -1072,15 +1138,27 @@ def summary():
                     vrrp_vr_state = "Ok"
             a.write("Статус VRRP:          " + vrrp_state + "\n")
             a.write("VRRP Master/Backup:   " + vrrp_vr_state + "\n")
+    with open(vpls_state_table, "r", newline='') as f:
+        with open(os_path + '\\tables\\summary.txt', "a") as a:
+            if "Not Ok" in f.read():
+                a.write("Статус VPLS:          Not Ok\n")
+            else:
+                a.write("Статус VPLS:          Ok\n")
+    with open(vpls_mac_table, "r", newline='') as f:
+        with open(os_path + '\\tables\\summary.txt', "a") as a:
+            if "Not Ok" in f.read():
+                a.write("VPLS MAC-table:       Not Ok\n")
+            else:
+                a.write("VPLS MAC-table:       Ok\n")
 
 def function():
     if not "outputs_before_upgrade" in os.listdir(os_path):
         create_outputs_before_upgrade()
         collect_outputs_before_upgrade()
     else:
-        #create_outputs_after_upgrade()
-        #create_table()
-        #collect_outputs_after_upgrade()
+        create_outputs_after_upgrade()
+        create_table()
+        collect_outputs_after_upgrade()
         route_table()
         interface_state()
         interface_traffic()
@@ -1097,6 +1175,8 @@ def function():
         rsvp_egress()
         rsvp_transit()
         vrrp()
+        vpls_connection()
+        vpls_mac_table()
         summary()
 
 function()
