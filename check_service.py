@@ -890,6 +890,9 @@ def collect_outputs_before_upgrade():
                                                                     elif "show interfaces | " in command:
                                                                         with open(os_path + '\\outputs_before_upgrade\\' + "show interfaces" + '.txt', "w") as a:
                                                                             a.write(hostname + command + "\n" + result + "\n" + hostname + "\n")
+                                                                    elif "show interfaces diagnostic" in command:
+                                                                        with open(os_path + '\\outputs_after_upgrade\\' + "show interfaces diagnostic optics" + '.txt', "w") as a:
+                                                                            a.write(hostname + command + "\n" + result + "\n" + hostname + "\n")
                                                                     elif "show vpls connections" in command:
                                                                         with open(os_path + '\\outputs_before_upgrade\\' + "show vpls connections" + '.txt', "a") as a:
                                                                             a.write(hostname + command + "\n" + result + "\n" + hostname + "\n")
@@ -1001,6 +1004,9 @@ def collect_outputs_after_upgrade():
                                                                             a.write(hostname + command + "\n" + result + "\n" + hostname + "\n")
                                                                     elif "show interfaces | " in command:
                                                                         with open(os_path + '\\outputs_after_upgrade\\' + "show interfaces" + '.txt', "w") as a:
+                                                                            a.write(hostname + command + "\n" + result + "\n" + hostname + "\n")
+                                                                    elif "show interfaces diagnostic" in command:
+                                                                        with open(os_path + '\\outputs_after_upgrade\\' + "show interfaces diagnostic optics" + '.txt', "w") as a:
                                                                             a.write(hostname + command + "\n" + result + "\n" + hostname + "\n")
                                                                     elif "show vpls connections" in command:
                                                                         with open(os_path + '\\outputs_after_upgrade\\' + "show vpls connections" + '.txt', "a") as a:
