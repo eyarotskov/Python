@@ -820,7 +820,6 @@ def collect_outputs_before_upgrade():
     with open(os_path + "\\ssh_connection.txt") as a:
         hostname = "@" + re.search('hostname: (.*)', a.read()).group(1) + ">"
         commands = {'show task replication | no-more',
-                    'show pim neighbors | no-more',
                     'show chassis fabric summary | no-more',
                     'show bgp summary logical-system all | no-more',
                     'show bgp summary logical-system all | no-more | m Establ',
@@ -931,7 +930,6 @@ def collect_outputs_after_upgrade():
     with open(os_path + "\\ssh_connection.txt") as a:
         hostname = "@" + re.search('hostname: (.*)', a.read()).group(1) + ">"
         commands = {'show task replication | no-more',
-                    'show pim neighbors | no-more',
                     'show chassis fabric summary | no-more',
                     'show bgp summary logical-system all | no-more',
                     'show bgp summary logical-system all | no-more | m Establ',
